@@ -15,7 +15,7 @@ const double INF = 1e18;
 const double JUMP_SIZE = (WIDTH/100.0 * HEIGHT/100.0)/1.5;
 const double DISK_SIZE = JUMP_SIZE ; // Ball radius around which nearby points are found 
 
-int whichRRT = 3 ; 
+int whichPlanner = 3 ; 
 
 vector < Polygon > obstacles ; 
 Point start, stop ; 
@@ -30,7 +30,11 @@ vector <sf::ConvexShape> polygons ;
 sf::CircleShape startingPoint, endingPoint ; 
 bool pathFound = 0 ;
 
+// Geting Initial Inputs
 void getInput() {
+	/*
+		Takes Input for the Screen Size along with the obstacle positions 
+	*/
 	cout << "NOTE:" << endl ; 
 	cout << "Height of screen: " << HEIGHT << " pixels." ;
 	cout << " Width of screeen: " << WIDTH << " pixels." << endl ;
@@ -39,7 +43,7 @@ void getInput() {
 	cout << "Please provide your inputs keeping this in mind. " << endl << endl ;
 
 	cout << "Which type of RRT would you like to watch? 1 for RRT, 2 for RRT*, 3 for Anytime RRT" << endl ;
-	cin >> whichRRT ; 
+	cin >> whichPlanner ; 
 	cout << "Input co-ordinates of starting and ending point respectively in this format X1 Y1 X2 Y2" << endl ;
 	cin >> start.x >> start.y >> stop.x >> stop.y ;
 	cout << "How many obstacles?" << endl ; 
@@ -210,7 +214,7 @@ void RRT() {
 		nextPoint = stepNear(nearestPoint, newPoint, jumps[nearestIndex]);
 		if(!isEdgeObstacleFree(nearestPoint, nextPoint)) continue ; 
 
-		if( (whichRRT == 1) or (!pathFound and whichRRT == 3)) {
+		if( (whichPlanner == 1) or (!pathFound and whichPlanner == 3)) {
 			// This is where we don't do any RRT* optimization part 
 			updated = true ;
 			nodes.push_back(nextPoint); nodeCnt++;
@@ -240,16 +244,18 @@ void RRT() {
 	}
 }
 
-int main() {
-	getInput(); prepareInput(); 
-    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Basic Anytime RRT");
+int callDjikstra(){
+	cout<<"LOL"<<endl;
+}
+
+int callRRT(){
+	sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Basic Anytime RRT");
 
 	nodeCnt = 1; nodes.push_back(start); int iterations = 0 ; 
 	parent.push_back(0); cost.push_back(0);
     sf::Time delayTime = sf::milliseconds(5);
 
-    cout << endl << "Starting node is in Pink and Destination node is in Blue" << endl << endl ; 
-    while (window.isOpen())
+	while (window.isOpen())
     {
         sf::Event event;
         while (window.pollEvent(event))
@@ -274,6 +280,19 @@ int main() {
 		draw(window); 
         window.display();
     }
+}
+
+
+signed main() {
+	getInput(); prepareInput(); 
+    cout << endl << "Starting node is in Pink and Destination node is in Blue" << endl << endl ; 
+
+
+    cout<<whichPlanner
+   	if(whichPlanner<4)	callRRT();
+
+   	else callDjikstra();
+
 }
 
 /* SOME SAMPLE INPUTS ARE SHOWN BELOW (only cin part) without any RRT preference */ 
