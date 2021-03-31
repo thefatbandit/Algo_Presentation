@@ -23,7 +23,8 @@ int obstacle_cnt = 1 ;
 
 queue < Point > nodes; 
 // vector < int > parent, nearby ;
-
+ 
+int vis[WIDTH][HEIGHT] = {0};
 int cost[WIDTH][HEIGHT] = {MAX_INT};
 Point parent[WIDTH][HEIGHT];
 
@@ -104,16 +105,36 @@ void draw(sf::RenderWindow& window) {
 	// Draw obstacles 
 	for(auto& poly : polygons) window.draw(poly);
 
-	// Draw edges between nodes 
-	/*for(int i = (int)nodes.size() - 1; i; i--) {
-		Point par = nodes[parent[i]] ; 
-		line[0] = sf::Vertex(sf::Vector2f(par.x, par.y));
-		line[1] = sf::Vertex(sf::Vector2f(nodes[i].x, nodes[i].y));
-		window.draw(line, 2, sf::Lines);
-	}*/
+	for (int i = 0; i < WIDTH; ++i)
+	{
+		for (int j = 0; j < HEIGHT; ++j)
+		{
+			if(vis[i][j]){
+				Point node = {(double) i,(double) j};
+				Point par = parent[i][j];
+
+				line[0] = sf::Vertex(sf::Vector2f(par.x, par.y));
+				line[1] = sf::Vertex(sf::Vector2f(i, j));
+				window.draw(line, 2, sf::Lines);
+			}	
+		}
+	}
 
 	window.draw(startingPoint); window.draw(endingPoint);
+	
 
+	if (pathFound)
+	{
+		Point node = stop;
+		while(!(parent[(int) node.x][(int) node.y]==node)){
+			Point par = parent[(int) node.x][(int) node.y];
+			line[0] = sf::Vertex(sf::Vector2f(par.x, par.y));
+			line[1] = sf::Vertex(sf::Vector2f(node.x, node.y));
+			line[0].color = line[1].color = sf::Color::Red; // orange color 
+			window.draw(line, 2, sf::Lines);
+			node = par ;
+		}
+	}
 	// If destination is reached then path is retraced and drawn 
 	// if(pathFound) {
 	// 	int node = goalIndex; 
@@ -160,12 +181,46 @@ Point pickRandomPoint() {
 // 	}
 // }
 
+int isValid(Point par, Point p){
+	if(p.x<0||p.y<0||p.y>HEIGHT||p.x>WIDTH) return 0;
+
+	if(!isEdgeObstacleFree(par,p)) return 0;
+
+	return 1;
+}
+
 void Dijkstra(){
 	// Point newPoint, nearestPoint, nextPoint ; bool updated = false ; int cnt = 0 ; 
 	// int nearestIndex = 0 ; double minCost = INF; nearby.clear(); jumps.resize(nodeCnt);
 
+	Point p = nodes.front();
+	vis[(int) p.x][(int) p.y] = 1;
 
+	for (int i = -1; i < 2; ++i)
+	{
+		for (int j = -1; j < 2; ++j)
+		{
+			if(i*j==0){
+				Point temp;
+				temp.x = p.x + i;
+				temp.y = p.y + j;
 
+				if(isValid(p,temp) and vis[(int) temp.x][(int) temp.y]!=1){
+					nodes.push(temp);
+					vis[(int) temp.x][(int) temp.y] = 1;
+				}
+				if((cost[(int) p.x][(int) p.y] + 1 < cost[(int) temp.x][(int) temp.y])){
+				cost[(int) temp.x][(int) temp.y] = cost[(int) p.x][(int) p.y] + 1;
+				parent[(int) p.x+i][(int) p.y+j] = {p.x,p.y};
+
+				if(p==stop) pathFound = 1; 
+				}
+			}
+			
+		}
+	}
+
+	nodes.pop();
 }
 
 int callDijkstra(){
@@ -173,14 +228,16 @@ int callDijkstra(){
 
 	nodeCnt = 1; int iterations = 0 ; 
 
+	// Setting the source as it's own parent & it's cost as 0
+	parent[(int) start.x][(int) start.y] = {start.x,start.y};
+	cost[(int) start.x][(int) start.y] = 0;
 
-	int tempx = start.x;
-	int tempy = start.y;
-	parent[tempx][tempy] = {start.x,start.y};
-	cost[tempx][tempy] = 0;
+	// Pushing the source to the queue
+	nodes.push({start.x,start.y});
+
     sf::Time delayTime = sf::milliseconds(5);
 
-    while ((window.isOpen() and !pathFound))
+    while (window.isOpen() and !nodes.empty())
     {
         sf::Event event;
         while (window.pollEvent(event))
@@ -191,9 +248,15 @@ int callDijkstra(){
             	return 0; exit(0);
             }
         }
-        Dijkstra(); iterations++;
+        if(!pathFound){
+	        Dijkstra(); iterations++;
+        }
+
+        if(iterations % 25 == 0){
+        	cout<<nodes.front().x<<" "<<nodes.front().y<<endl;
+        }
         
-		if(iterations % 500 == 0) {
+		if(iterations % 1000 == 0) {
 			cout << "Iterations: " << iterations << endl ; 
 			if(!pathFound) cout << "Not reached yet :( " << endl ;
 			else cout << "Shortest distance till now: " << cost[goalIndex] << " units." << endl ;
