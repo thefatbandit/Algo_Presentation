@@ -245,9 +245,7 @@ void RRT() {
 }
 
 int callRRT(){
-	if(whichPlanner==1) sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "RRT");
-	if(whichPlanner==2) sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "RRT*");
-	if(whichPlanner==3) sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Anytime RRT");
+	sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Vizualization");
 
 	nodeCnt = 1; nodes.push_back(start); int iterations = 0 ; 
 	parent.push_back(0); cost.push_back(0);

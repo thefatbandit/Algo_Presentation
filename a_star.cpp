@@ -10,7 +10,7 @@ const int RADIUS = 5 ;
 const double GOAL_SAMPLING_PROB = 0.05;
 const double INF = 1e18;
 
-const int JUMP_SIZE = 2 ;
+const int JUMP_SIZE = 1 ;
 const double DISK_SIZE = JUMP_SIZE ; // Ball radius around which nearby points are found 
 
 int whichPlanner = 4 ; 
@@ -153,9 +153,11 @@ bool isEdgeObstacleFree(Point a, Point b) {
 
 // Checks whether the given node is within JUMP_SIZE distance from destination
 bool checkDestinationReached(Point p){
-	if(distance(p,stop) < JUMP_SIZE){
-		cout<<"GAYA!!"<<endl;
+	if(distance(p,stop) < (3*JUMP_SIZE)){
 		return 1;
+	}
+	else{
+		return 0;
 	}
 }
 
@@ -178,7 +180,7 @@ void aStar(){
 	vis[(int) p.x][(int) p.y] = 1;
 
 	if(checkDestinationReached(p)){
-		pathFound=1;
+		pathFound = 1;
 		goal = p;
 	} 
 
