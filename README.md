@@ -1,14 +1,7 @@
 # Algo_Presentation
 Repo for algo presentation code on path finding methods
 
-## TO-DO
-- **Varun:** Remove as much STL componenets from the RRT implementation as possible. Also remove the code for Anytime RRT. 
-
-- **Motiar:** Start making the presentation with small explanantions on the planners.
-
-- **Arnesh:** Start coding up Djikstra & A* on the visualization environment.
-
-## Installation 
+## Prerequisite Installation 
 
 Run the following command to install SFML on Linux (For other OS, please check the guide(s) available online) 
 
@@ -23,6 +16,13 @@ $ g++ -std=c++11 -c geometry.h rrt.cpp
 $ g++ rrt.o -o sfml-app -lsfml-graphics -lsfml-window -lsfml-system
 $ ./sfml-app 
 ```
+
+or you can use the sheel scripts. To run "<script>.sh":
+  ```
+  $ sudo chmod +x <script>.sh
+  $ ./<script>.sh
+  ```
+### You can copy sample inputs from "cases.txt" for the runs.
 
 ## Usage 
 
