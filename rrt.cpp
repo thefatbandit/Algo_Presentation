@@ -244,10 +244,6 @@ void RRT() {
 	}
 }
 
-int callDjikstra(){
-	cout<<"LOL"<<endl;
-}
-
 int callRRT(){
 	sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Basic Anytime RRT");
 
@@ -282,17 +278,14 @@ int callRRT(){
     }
 }
 
-
 signed main() {
 	getInput(); prepareInput(); 
     cout << endl << "Starting node is in Pink and Destination node is in Blue" << endl << endl ; 
 
 
-    cout<<whichPlanner
    	if(whichPlanner<4)	callRRT();
 
-   	else callDjikstra();
-
+   	else cout<<"Please select a valid planner";
 }
 
 /* SOME SAMPLE INPUTS ARE SHOWN BELOW (only cin part) without any RRT preference */ 
