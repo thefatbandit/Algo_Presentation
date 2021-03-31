@@ -10,7 +10,7 @@ const int RADIUS = 5 ;
 const double GOAL_SAMPLING_PROB = 0.05;
 const double INF = 1e18;
 
-const int JUMP_SIZE = 5;
+const int JUMP_SIZE = 10;
 const double DISK_SIZE = JUMP_SIZE ; // Ball radius around which nearby points are found 
 
 int whichPlanner = 4 ; 
@@ -27,7 +27,8 @@ int vis[WIDTH][HEIGHT] = {0};
 int cost[WIDTH][HEIGHT];
 Point parent[WIDTH][HEIGHT];
 
-int nodeCnt = 0, goalIndex = -1 ; 
+int nodeCnt = 0;
+Point goal; 
 
 vector <sf::ConvexShape> polygons ;
 sf::CircleShape startingPoint, endingPoint ; 
@@ -125,7 +126,7 @@ void draw(sf::RenderWindow& window) {
 
 	if (pathFound)
 	{
-		Point node = stop;
+		Point node = goal;
 		while(!(parent[(int) node.x][(int) node.y]==node)){
 			Point par = parent[(int) node.x][(int) node.y];
 			line[0] = sf::Vertex(sf::Vector2f(par.x, par.y));
@@ -191,46 +192,40 @@ void Dijkstra(){
 	Point p = nodes.front();
 	vis[(int) p.x][(int) p.y] = 1;
 
-	cout<<"1"<<endl;
-	if(checkDestinationReached(p)) pathFound=1;
+	if(checkDestinationReached(p)){
+		pathFound=1;
+		goal = p;
+	} 
 
-	cout<<"2"<<endl;
-	for (int i = -1; i < 2; ++i)
-	{
-		for (int j = -1; j < 2; ++j)
+	else{
+		for (int i = -1; i < 2; ++i)
 		{
-			if(i*j==0){
-	cout<<"3"<<endl;
-				Point temp;
-				temp.x = p.x + (i*JUMP_SIZE);
-				temp.y = p.y + (j*JUMP_SIZE);
-
-				if (isValid(p,temp))
-				{
-		cout<<"4"<<endl;
-					if(vis[(int) temp.x][(int) temp.y]!=1){
-		cout<<"5"<<endl;
-						nodes.push(temp);
-						vis[(int) temp.x][(int) temp.y] = 1;
-		cout<<"6"<<endl;
+			for (int j = -1; j < 2; ++j)
+			{
+				if(i*j==0){
+					Point temp;
+					temp.x = p.x + (i*JUMP_SIZE);
+					temp.y = p.y + (j*JUMP_SIZE);
+	
+					if (isValid(p,temp))
+					{
+						if(vis[(int) temp.x][(int) temp.y]!=1){
+							nodes.push(temp);
+							vis[(int) temp.x][(int) temp.y] = 1;
+						}
+						if((cost[(int) p.x][(int) p.y] + 1 < cost[(int) temp.x][(int) temp.y])){
+						cost[(int) temp.x][(int) temp.y] = cost[(int) p.x][(int) p.y] + 1;
+						parent[(int) temp.x][(int) temp.y] = {p.x,p.y};
+						// cout<<"Parent of:"<<
+						}
 					}
-		cout<<"7"<<endl;
-					if((cost[(int) p.x][(int) p.y] + 1 < cost[(int) temp.x][(int) temp.y])){
-		cout<<"8"<<endl;
-					cost[(int) temp.x][(int) temp.y] = cost[(int) p.x][(int) p.y] + 1;
-					parent[(int) p.x+i][(int) p.y+j] = {p.x,p.y};
-		cout<<"9"<<endl;
+			
 					}
-				}
-		
-				}
-				
+					
+			}
 		}
+		nodes.pop();
 	}
-
-	cout<<"10"<<endl;
-	nodes.pop();
-	cout<<"11"<<endl;
 }
 
 int callDijkstra(){
@@ -240,14 +235,7 @@ int callDijkstra(){
 
 	// Setting the source as it's own parent & it's cost as 0
 	parent[(int) start.x][(int) start.y] = {start.x,start.y};
-	cout<<" XXX "<<cost[(int) start.x][(int) start.y]<<endl;
-	int temp;
-	cout<<"bla-bla"<<endl; cin>>temp;
 	cost[(int) start.x][(int) start.y] = 0;
-	cout<<" XXX "<<cost[(int) start.x][(int) start.y]<<endl;
-	cout<<"bla-bla"<<endl; cin>>temp;
-
-
 
     sf::Time delayTime = sf::milliseconds(5);
 
@@ -266,7 +254,7 @@ int callDijkstra(){
             }
         }
         if(!pathFound){
-	        cout<<nodes.front().x<<" "<<nodes.front().y<<endl;
+	        // cout<<nodes.front().x<<" "<<nodes.front().y<<endl;
 	        Dijkstra(); iterations++;
         }
 
