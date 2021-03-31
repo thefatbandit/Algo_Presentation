@@ -10,7 +10,7 @@ const int RADIUS = 5 ;
 const double GOAL_SAMPLING_PROB = 0.05;
 const double INF = 1e18;
 
-const int JUMP_SIZE = 10;
+const int JUMP_SIZE = 5 ;
 const double DISK_SIZE = JUMP_SIZE ; // Ball radius around which nearby points are found 
 
 int whichPlanner = 4 ; 
@@ -20,14 +20,13 @@ Point start, stop ;
 int obstacle_cnt = 1 ;
 
 queue < Point > nodes; 
-// vector < int > parent, nearby ;
- 
+
+// For keeping track of visited nodes 
 int vis[WIDTH][HEIGHT] = {0};
 
-int cost[WIDTH][HEIGHT];
+// For storing costs & parents of nodes
+float cost[WIDTH][HEIGHT];
 Point parent[WIDTH][HEIGHT];
-
-int nodeCnt = 0;
 Point goal; 
 
 vector <sf::ConvexShape> polygons ;
@@ -126,6 +125,11 @@ void draw(sf::RenderWindow& window) {
 
 	if (pathFound)
 	{
+		line[0] = sf::Vertex(sf::Vector2f(goal.x, goal.y));
+		line[1] = sf::Vertex(sf::Vector2f(stop.x, stop.y));
+		line[0].color = line[1].color = sf::Color::Red; // orange color 
+		window.draw(line, 2, sf::Lines);
+
 		Point node = goal;
 		while(!(parent[(int) node.x][(int) node.y]==node)){
 			Point par = parent[(int) node.x][(int) node.y];
@@ -133,29 +137,10 @@ void draw(sf::RenderWindow& window) {
 			line[1] = sf::Vertex(sf::Vector2f(node.x, node.y));
 			line[0].color = line[1].color = sf::Color::Red; // orange color 
 			window.draw(line, 2, sf::Lines);
-			node = par ;
+			node = par;
 		}
-	}
-	// If destination is reached then path is retraced and drawn 
-	// if(pathFound) {
-	// 	int node = goalIndex; 
-	// 	while(parent[node] != node) {
-	// 		int par = parent[node];
-	// 		line[0] = sf::Vertex(sf::Vector2f(nodes[par].x, nodes[par].y));
-	// 		line[1] = sf::Vertex(sf::Vector2f(nodes[node].x, nodes[node].y));
-	// 		line[0].color = line[1].color = sf::Color::Red; // orange color 
-	// 		window.draw(line, 2, sf::Lines);
-	// 		node = par ;
-	// 	}
-	// }
-}
 
-template <typename T> // Returns a random number in [low, high] 
-T randomCoordinate(T low, T high){
-    random_device random_device;
-    mt19937 engine{random_device()};
-    uniform_real_distribution<double> dist(low, high);
-    return dist(engine);
+	}
 }
 
 // Returns true if the line segment ab is obstacle free
@@ -166,17 +151,12 @@ bool isEdgeObstacleFree(Point a, Point b) {
     return true ; 
 }
 
-// Returns a random point with some bias towards goal 
-Point pickRandomPoint() {
-    double random_sample = randomCoordinate(0.0, 1.0); 
-    if((random_sample - GOAL_SAMPLING_PROB) <= EPS and !pathFound) return stop + Point(RADIUS, RADIUS) ;
-	return Point(randomCoordinate(0, WIDTH), randomCoordinate(0, HEIGHT)); 
-}
-
+// Checks whether the given node is within JUMP_SIZE distance from destination
 bool checkDestinationReached(Point p){
 	if(distance(p,stop)<JUMP_SIZE) return 1;
 }
 
+// Validates a new point
 int isValid(Point par, Point p){
 	if(p.x<0||p.y<0||p.y>HEIGHT||p.x>WIDTH) return 0;
 
@@ -185,10 +165,8 @@ int isValid(Point par, Point p){
 	return 1;
 }
 
+// Single Iteration Function for Djikstra
 void Dijkstra(){
-	// Point newPoint, nearestPoint, nextPoint ; bool updated = false ; int cnt = 0 ; 
-	// int nearestIndex = 0 ; double minCost = INF; nearby.clear(); jumps.resize(nodeCnt);
-
 	Point p = nodes.front();
 	vis[(int) p.x][(int) p.y] = 1;
 
@@ -213,66 +191,40 @@ void Dijkstra(){
 							nodes.push(temp);
 							vis[(int) temp.x][(int) temp.y] = 1;
 						}
-						if((cost[(int) p.x][(int) p.y] + 1 < cost[(int) temp.x][(int) temp.y])){
-						cost[(int) temp.x][(int) temp.y] = cost[(int) p.x][(int) p.y] + 1;
+						if((cost[(int) p.x][(int) p.y] + JUMP_SIZE < cost[(int) temp.x][(int) temp.y])){
+						cost[(int) temp.x][(int) temp.y] = cost[(int) p.x][(int) p.y] + JUMP_SIZE;
 						parent[(int) temp.x][(int) temp.y] = {p.x,p.y};
 						// cout<<"Parent of:"<<
 						}
 					}
-			
+				}
+
+				else{
+					Point temp;
+					temp.x = p.x + (i*JUMP_SIZE);
+					temp.y = p.y + (j*JUMP_SIZE);
+	
+					if (isValid(p,temp))
+					{
+						if(vis[(int) temp.x][(int) temp.y]!=1){
+							nodes.push(temp);
+							vis[(int) temp.x][(int) temp.y] = 1;
+						}
+						if((cost[(int) p.x][(int) p.y] + (1.414*JUMP_SIZE) < cost[(int) temp.x][(int) temp.y])){
+						cost[(int) temp.x][(int) temp.y] = cost[(int) p.x][(int) p.y] + (1.414*JUMP_SIZE);
+						parent[(int) temp.x][(int) temp.y] = {p.x,p.y};
+						// cout<<"Parent of:"<<
+						}
 					}
-					
+				}
+
 			}
 		}
 		nodes.pop();
 	}
 }
 
-int callDijkstra(){
-	sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Dijkstra");
-
-	nodeCnt = 1; int iterations = 0 ; 
-
-	// Setting the source as it's own parent & it's cost as 0
-	parent[(int) start.x][(int) start.y] = {start.x,start.y};
-	cost[(int) start.x][(int) start.y] = 0;
-
-    sf::Time delayTime = sf::milliseconds(5);
-
-	// Pushing the source to the queue
-	nodes.push({start.x,start.y});
-
-    while (window.isOpen() and !nodes.empty())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-            {
-            	window.close();
-            	return 0; exit(0);
-            }
-        }
-        if(!pathFound){
-	        // cout<<nodes.front().x<<" "<<nodes.front().y<<endl;
-	        Dijkstra(); iterations++;
-        }
-
-		if(iterations % 10000 == 0) {
-			cout << "Iterations: " << iterations << endl ; 
-			if(!pathFound) cout << "Not reached yet :( " << endl ;
-			else cout << "Shortest distance till now: " << cost[(int) stop.x][(int) stop.y] << " units." << endl ;
-			cout << endl ;
-		}
-
-		//sf::sleep(delayTime);
-		window.clear();
-		draw(window); 
-        window.display();
-    }
-
-}
-
+// Main Function Call
 signed main() {
 	getInput(); prepareInput(); 
     cout << endl << "Starting node is in Pink and Destination node is in Blue" << endl << endl ; 
@@ -285,7 +237,41 @@ signed main() {
     	}
     }
 
-   	if(whichPlanner==4)	callDijkstra();
+    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Dijkstra");
 
-   	else cout<<"Please select a valid planner";
+	int iterations = 0,result=0; 
+
+	// Setting the source as it's own parent & it's cost as 0
+	parent[(int) start.x][(int) start.y] = {start.x,start.y};
+	cost[(int) start.x][(int) start.y] = 0;
+
+    sf::Time delayTime = sf::milliseconds(0.5);
+
+	// Pushing the source to the queue
+	nodes.push({start.x,start.y});
+
+    while ((window.isOpen() and !nodes.empty()))
+    {
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+            {
+            	window.close();
+            	return 0; exit(0);
+            }
+        }
+
+        Dijkstra(); iterations++;
+        if(pathFound & result==0){
+        	float final_cost = cost[(int) goal.x][(int) goal.y] + distance(goal,stop);
+		    cout << "Distance: " << final_cost << " units." << endl;
+		    result=1;
+        }
+
+		window.clear();
+		draw(window); 
+        window.display();
+    }
+
 }
